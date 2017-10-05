@@ -59,6 +59,10 @@ case "${1:?}"-"${2:?}" in
         ( cd "${BuildDir:?}" && ./rebar3 as prod tar; )
         Prefix=$(package_prefix "${TRAVIS_OS_NAME:?}")
         cp -p "${BuildDir:?}"/_build/prod/rel/epoch/epoch-0.2.0.tar.gz "${BuildDir:?}"/_build/prod/rel/epoch/"${Prefix:?}"-epoch-0.2.0.tar.gz
+        if [ "$TRAVIS_TAG" != "" ]; then
+            make -C ${BuildDir:?} nose-env
+            make -C ${BuildDir:?} release-integration-test TARBALL="${BuildDir:?}"/_build/prod/rel/epoch/"${Prefix:?}"-epoch-0.2.0.tar.gz
+        fi
         ;;
     after_failure-check_rels)
         BuildDir="${3:?}"
