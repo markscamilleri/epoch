@@ -13,12 +13,15 @@
 	, code/1
 	, cp/1
 	, data/1
+	, extcodesize/2
 	, gas/1
+	, gasprice/1
 	, init/1
 	, init/2
 	, jumpdests/1
         , out/1
 	, mem/1
+	, number/1
 	, set_call/2
 	, set_code/2
 	, set_cp/2
@@ -38,7 +41,9 @@
 init(Spec) ->
     init(Spec, #{}).
 
-init(#{exec := Exec, pre := Pre} = _Spec, Opts) ->
+init(#{ env  := Env
+      , exec := Exec
+      , pre  := Pre} = _Spec, Opts) ->
     Address = maps:get(address, Exec),
     #{ address   => Address
      , call      => #{}
@@ -46,10 +51,12 @@ init(#{exec := Exec, pre := Pre} = _Spec, Opts) ->
      , code      => maps:get(code, Exec)
      , cp        => 0
      , data      => maps:get(data, Exec)
+     , ext_code_sizes => get_ext_code_sizes(Pre)
      , do_trace  => maps:get(trace, Opts, false)
      , gas       => maps:get(gas, Exec)
      , gas_price => maps:get(gasPrice, Exec)
      , memory    => #{}
+     , number    => maps:get(currentNumber, Env)
      , origin    => maps:get(origin, Exec)
      , out       => <<>>
      , stack     => []
@@ -65,6 +72,11 @@ init_storage(Address, #{} = Pre) ->
         #{storage := S} -> S
     end.
 
+get_ext_code_sizes(#{} = Pre) ->
+    maps:from_list(
+      [{Address, byte_size(C)} || {Address, #{code := C}} <-maps:to_list(Pre)]).
+
+
 init_trace_fun(Opts) ->
     maps:get(trace_fun, Opts, fun(S,A) -> io:format(S,A) end).
 
@@ -73,11 +85,15 @@ caller(State)    -> maps:get(caller, State).
 cp(State)        -> maps:get(cp, State).
 code(State)      -> maps:get(code, State).
 data(State)      -> maps:get(data, State).
+extcodesize(Adr, State) ->
+    maps:get(Adr, maps:get(ext_code_sizes, State), 0).
 jumpdests(State) -> maps:get(jumpdests, State).
 stack(State)     -> maps:get(stack, State).
 mem(State)       -> maps:get(memory, State).
+number(State)    -> maps:get(number, State).
 out(State)       -> maps:get(out, State).
 gas(State)       -> maps:get(gas, State).
+gasprice(State)  -> maps:get(gas_price, State).
 storage(State)   -> maps:get(storage, State).
 value(State)     -> maps:get(value, State).
 

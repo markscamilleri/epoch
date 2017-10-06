@@ -13,6 +13,7 @@
         , size_in_words/1
         , store/3
         , store8/3
+	, write_area/3
         ]).
 
 -include("aevm_eeevm.hrl").
@@ -29,6 +30,13 @@ get_area(From, To, State) ->
     State1 = aevm_eeevm_state:set_mem(Mem2, State),
     Res = list_to_binary([read_raw(X, 1, Mem2) || X <- lists:seq(From, To)]),
     {Res, State1}.
+
+write_area(From, Bytes, State) ->
+    write_bytes(From, [B || <<B:8>> <= Bytes], State).
+
+write_bytes(_, [], State) -> State;
+write_bytes(Address, [Byte|Bytes], State) ->
+    write_bytes(Address+1, Bytes, store8(Address, Byte, State)).
 
 load(Address, State) ->
     Mem = aevm_eeevm_state:mem(State),
@@ -88,7 +96,7 @@ write_unaligned(Address, Value256, Mem) ->
     BitOffsetLow = (Address - LowAligned)*8,
     BitOffsetHigh = 256 - BitOffsetLow,
     <<Pre:BitOffsetLow, _/bits>> = <<OldLow:256>>,
-    <<_, Post:BitOffsetHigh>> = <<OldHigh:256>>,
+    <<_:BitOffsetLow, Post:BitOffsetHigh>> = <<OldHigh:256>>,
     <<NewLow:256, NewHigh:256>> =
 	<<Pre:BitOffsetLow, Value256:256, Post:BitOffsetHigh>>,
     Mem1 = write(HighAligned, NewHigh, Mem),
@@ -110,5 +118,13 @@ read(Address, 32, Mem) ->
 	true -> %% Aligned.
 	    {maps:get(AlignedAddress , Mem, 0), extend(AlignedAddress, Mem)};
 	false -> %%
-	    error(unaligned_mem_read_not_implemented)
+	    Lo = maps:get(AlignedAddress , Mem, 0),
+	    Hi = maps:get(AlignedAddress+32 , Mem, 0),
+	    Offset = (Address - AlignedAddress)*8,
+	    HiBitsSize = ?WORDSIZE-Offset,
+	    <<_:Offset, HiBits:HiBitsSize>> = <<Lo:?WORDSIZE>>,
+	    LoBitsSize = Offset,
+	    <<LoBits:LoBitsSize, _:HiBitsSize>> = <<Hi:?WORDSIZE>>,
+	    <<Word:256>> = <<HiBits:HiBitsSize,LoBits:LoBitsSize>>,
+	    {Word, extend(AlignedAddress+32, Mem)}
     end.

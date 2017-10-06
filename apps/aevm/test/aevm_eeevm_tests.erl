@@ -422,7 +422,7 @@ vm_sha3_tests() ->
     ].
 
 %%====================================================================
-%% VMTests tests
+%% VM IO and Flow tests
 %%====================================================================
 
 vm_io_and_flow_operations_test_() ->
@@ -431,11 +431,45 @@ vm_io_and_flow_operations_test_() ->
 
 
 vm_io_and_flow_operations_tests() ->
-    [ jump0_foreverOutOfGas
+    [ 'DynamicJumpPathologicalTest0'
+    , 'DynamicJumpPathologicalTest1'
+    , 'DynamicJumpPathologicalTest2'
+    , 'DynamicJumpPathologicalTest3'
+    , 'DynamicJumpStartWithJumpDest'
+    , for_loop1
+    , for_loop2
+    , gasOverFlow
+    , 'JDfromStorageDynamicJump0_foreverOutOfGas'
+    , 'JDfromStorageDynamicJump0_jumpdest0'
+    , 'JDfromStorageDynamicJump0_jumpdest2'
+    , 'JDfromStorageDynamicJumpi1_jumpdest'
+    , 'JDfromStorageDynamicJumpiAfterStop'
+    , 'JDfromStorageDynamicJumpifInsidePushWithJumpDest'
+    , 'JDfromStorageDynamicJumpInsidePushWithJumpDest'
+    , jump0_AfterJumpdest
+    , jump0_AfterJumpdest3
+    , jump0_foreverOutOfGas
     , jump0_jumpdest0
     , jump0_jumpdest2
+    , jumpAfterStop
+    , jumpdestBigList
+    , jumpDynamicJumpSameDest
+    , jumpi1_jumpdest
+    , jumpiAfterStop
+    , jumpi_at_the_end
+    , jumpifInsidePushWithJumpDest
+    , jumpInsidePushWithJumpDest
+    , jumpiToUint64maxPlus1
+    , jumpiToUintmaxPlus1
+    , jumpOntoJump
+    , jumpTo1InstructionafterJump
+    , jumpTo1InstructionafterJump_jumpdestFirstInstruction
+    , jumpToUintmaxPlus1
+    , kv1
     , loop_stacklimit_1020
     , loop_stacklimit_1021
+    , memory1
+    , mstore8_0
     , msize0
     , msize1
     , msize2
@@ -447,6 +481,25 @@ vm_io_and_flow_operations_tests() ->
     , return2
     , stack_loop
     , 'when'
+      %% TODD: Add remaining testcases.
+    ].
+
+
+%%====================================================================
+%% VM Get Env Tests
+%%====================================================================
+
+vm_environmental_info_test_() ->
+    aevm_test_utils:testcase_generate("VMTests/vmEnvironmentalInfo",
+				      vm_environmental_info_tests()).
+
+vm_environmental_info_tests() ->
+    [ calldatacopy0
+    , calldatasize0
+    , codesize
+    %% , env1 %% TODO: Tobias: aevm_test_utils,build_config_lists,2
+    , extcodesize0
+    , gasprice
     ].
 
 %%====================================================================

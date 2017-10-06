@@ -370,7 +370,7 @@ loop(StateIn) ->
 		    State1 = push(Arg, State0),
 		    next_instruction(OP, State1);
 		?CALLVALUE ->
-		   %% 0x34 CALLVALUE 0 1
+		   %% 0x34 CALLVALUE δ=0 α=1
 		    %% Get deposited value by the instruction/transaction
 		    %% responsible for this execution.
 		    %% µ's[0] ≡ Iv
@@ -388,9 +388,80 @@ loop(StateIn) ->
 		    Arg = data_get_val(Us0, Bytes, State1),
 		    State2 = push(Arg, State1),
 		    next_instruction(OP, State2);
-
+		?CALLDATASIZE ->
+		    %% 0x36 CALLDATASIZE δ=0 α=1
+		    %% Get size of input data in current environment.
+		    %% µ's[0] ≡ |Id|
+		    %% This pertains to the input data passed with the
+		    %% message call instruction or transaction.
+		    Val = byte_size(aevm_eeevm_state:data(State0)),
+		    State1 = push(Val, State0),
+		    next_instruction(OP, State1);
+		?CALLDATACOPY ->
+		    %% 0x37 CALLDATACOPY 3 0
+		    %% Copy input data in current environment to memory.
+		    %% ∀i∈{0...µs[2]−1}µ'm[µs[0] + i] ≡ Id[µs[1] + i]
+		    %%                                       if µs[1] + i < |Id|
+		    %%                                   0 otherwise
+		    %% The additions in µs[1] + i are not subject to
+		    %% the 2^256 modulo.
+		    %% µ'i ≡ M(µi, µs[0], µs[2])
+		    %% This pertains to the input data passed with
+		    %% the message call instruction or transaction.    
+		    {Us0, State1} = pop(State0),
+		    {Us1, State2} = pop(State1),
+		    {Us2, State3} = pop(State2),
+		    CallData = data_get_bytes(Us1, Us2, State3),
+		    State4 = aevm_eeevm_memory:write_area(Us0, CallData, State3),
+		    next_instruction(OP, State4);
+		?CODESIZE ->
+		    %% 0x38 CODESIZE  δ=0 α=1
+		    %% Get size of code running in current environment.
+		    %% µ's[0] ≡ |Ib|
+		    State1 = push(byte_size(Code), State0),
+		    next_instruction(OP, State1);
+		?CODECOPY ->
+		    %% 0x39 CODECOPY δ=3 α=0
+		    %% Copy code running in current environment to memory.
+		    %% ∀i∈{0...µs[2]−1}µ0m[µs[0] + i] ≡ Ib[µs[1] + i]
+		    %%                                        if µs[1] + i < |Ib|
+		    %%                                   STOP otherwise
+		    %% µ'i ≡ M(µi, µs[0], µs[2])
+		    %% The additions in µs[1] + i are not subject to
+		    %% the 2^256 modulo.
+		    {Us0, State1} = pop(State0),
+		    {Us1, State2} = pop(State1),
+		    {Us2, State3} = pop(State2),
+		    CodeArea = code_get_area(Us1, Us2, Code),
+		    State4 = aevm_eeevm_memory:write_area(Us0, CodeArea, State3),
+		    next_instruction(OP, State4);
+		?GASPRICE ->
+		    %% 0x3a GASPRICE δ=0 α=1
+		    %% Get price of gas in current environment.
+		    %% µ's[0] ≡ Ip
+		    %%  This is gas price specified by the originating transaction.   
+		    Arg = aevm_eeevm_state:gasprice(State0),
+		    State1 = push(Arg, State0),
+		    next_instruction(OP, State1);
+		?EXTCODESIZE ->
+		    %% 0x3b EXTCODESIZE δ=1 α=1
+		    %% Get size of an account’s code.
+		    %% µ's[0] ≡ |σ[µs[0] mod 2^160] c|
+		    {Us0, State1} = pop(State0),
+		    Val = aevm_eeevm_state:extcodesize(Us0, State1),
+		    State2 = push(Val, State1),
+		    next_instruction(OP, State2);
+		    
 		%% No opcode 0x3f
 		16#3f -> throw({illegal_instruction, OP, State});
+		?NUMBER ->
+		    %% 0x43 NUMBER  δ=0 α=1
+		    %% Get the block’s number.
+		    %% µ's[0] ≡ IHi
+		    Arg = aevm_eeevm_state:number(State0),
+		    State1 = push(Arg, State0),
+		    next_instruction(OP, State1);
+		    
 		?POP ->
 		    %% 0x50 POP δ=1 α=0
 		    %% Remove item from stack.
@@ -462,7 +533,7 @@ loop(StateIn) ->
 			true -> 
 			    State2 = set_cp(Us0-1, State1),
 			    next_instruction(OP, State2);
-			false -> throw({invalid_jumpdest, Us0, State1})
+			false -> throw({{invalid_jumpdest, Us0}, State1})
 		    end;
 		?JUMPI ->
 		    %% 0x57 JUMPI δ=2 α=0
@@ -479,7 +550,7 @@ loop(StateIn) ->
 				    true -> 
 					set_cp(Us0-1, State2);
 				    false -> 
-					throw({invalid_jumpdest, Us0, State1})
+					throw({{invalid_jumpdest, Us0}, State1})
 				end;
 			   true      -> State2
 			end,
@@ -981,6 +1052,20 @@ data_get_val(Address, Size, State) ->
 	    Arg
     end.
 
+data_get_bytes(Address, Size, State) ->
+    Data = aevm_eeevm_state:data(State),
+    Pos = Address * 8,
+    if Address+Size >= byte_size(Data) ->
+	    End = byte_size(Data),
+	    DataSize = (Size - (End - Address))*8,
+	    <<_:Pos, Bytes:Size/binary, _/binary>> = <<Data/binary, 0:DataSize>>,
+	    Bytes;
+       true ->
+	    <<_:Pos, Bytes:Size/binary, _/binary>> = Data,
+	    Bytes
+    end.
+
+
 					 
 
 %% ------------------------------------------------------------------------
@@ -1005,6 +1090,17 @@ code_get_arg(CP, Size, Code) ->
     Length = Size*8,
     <<_:Pos, Arg:Length, _/binary>> = Code,
     Arg.
+
+code_get_area(From, Size, Code) when From+Size >= byte_size(Code) ->
+    End = byte_size(Code),
+    DataSize = (Size - (End -From))*8,
+    Pos = From * 8,
+     <<_:Pos, Arg:Size/binary, _/binary>> = <<Code/binary, 0:DataSize>>,
+    Arg;
+code_get_area(From, Size, Code) ->
+    Pos = From * 8,
+    <<_:Pos, Arg:Size/binary, _/binary>> = Code,
+    Arg.   
 
 next_instruction(_OP, State) ->
     loop(inc_cp(State)).
