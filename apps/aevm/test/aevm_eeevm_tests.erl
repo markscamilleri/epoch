@@ -431,17 +431,22 @@ vm_io_and_flow_operations_test_() ->
 
 
 vm_io_and_flow_operations_tests() ->
-    [%% jump0_foreverOutOfGas
-      jump0_jumpdest0
+    [ jump0_foreverOutOfGas
+    , jump0_jumpdest0
     , jump0_jumpdest2
+    , loop_stacklimit_1020
+    , loop_stacklimit_1021
     , msize0
     , msize1
     , msize2
-    %% , msize3 %% TODO: Need new memory handling
+      %% , msize3 %% TODO: Need new memory handling
     , pop0
     , pop1
     , pc0
     , pc1
+    , return2
+    , stack_loop
+    , 'when'
     ].
 
 %%====================================================================
