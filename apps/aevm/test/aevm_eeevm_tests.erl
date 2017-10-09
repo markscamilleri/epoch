@@ -20,8 +20,138 @@
 extra_opts(Name) -> maps:put(blockhash, sha3, extra_opts_tc(Name)).
 %% To turn on tracing for a test case return a map with trace => true
 %% e.g. extra_opts_tc(mulmod4) -> #{trace => true};
-extra_opts_tc(_) ->
-    #{}.
+extra_opts_tc(Name) ->
+    case gas_exception(Name) of
+        true  -> #{validate_gas => false};
+        false -> #{}
+    end.
+
+gas_exception(Name) ->
+    lists:member(Name,
+                 [arith1
+                 , exp0
+                 , exp1
+                 , exp2
+                 , exp3
+                 , exp5
+                 , exp6
+                 , exp7
+                 , expPowerOf256Of256_0
+                 , expPowerOf2_128
+                 , expPowerOf2_16
+                 , expPowerOf2_256
+                 , expPowerOf2_2
+                 , expPowerOf2_32
+                 , expPowerOf2_4
+                 , expPowerOf256_10
+                 , expPowerOf256_11
+                 , expPowerOf256_12
+                 , expPowerOf256_13
+                 , expPowerOf256_14
+                 , expPowerOf256_15
+                 , expPowerOf256_16
+                 , expPowerOf256_17
+                 , expPowerOf256_18
+                 , expPowerOf256_19
+                 , expPowerOf256_1
+                 , expPowerOf256_20
+                 , expPowerOf256_21
+                 , expPowerOf256_22
+                 , expPowerOf256_23
+                 , expPowerOf256_24
+                 , expPowerOf256_25
+                 , expPowerOf256_26
+                 , expPowerOf256_27
+                 , expPowerOf256_28
+                 , expPowerOf256_29
+                 , expPowerOf256_2
+                 , expPowerOf256_30
+                 , expPowerOf256_31
+                 , expPowerOf256_32
+                 , expPowerOf256_33
+                 , expPowerOf256_3
+                 , expPowerOf256_4
+                 , expPowerOf256_5
+                 , expPowerOf256_6
+                 , expPowerOf256_7
+                 , expPowerOf256_8
+                 , expPowerOf256_9
+                 , expPowerOf256Of256_0
+                 , expPowerOf256Of256_10
+                 , expPowerOf256Of256_11
+                 , expPowerOf256Of256_12
+                 , expPowerOf256Of256_13
+                 , expPowerOf256Of256_14
+                 , expPowerOf256Of256_15
+                 , expPowerOf256Of256_16
+                 , expPowerOf256Of256_17
+                 , expPowerOf256Of256_18
+                 , expPowerOf256Of256_19
+                 , expPowerOf256Of256_1
+                 , expPowerOf256Of256_20
+                 , expPowerOf256Of256_21
+                 , expPowerOf256Of256_22
+                 , expPowerOf256Of256_23
+                 , expPowerOf256Of256_24
+                 , expPowerOf256Of256_25
+                 , expPowerOf256Of256_26
+                 , expPowerOf256Of256_27
+                 , expPowerOf256Of256_28
+                 , expPowerOf256Of256_29
+                 , expPowerOf256Of256_2
+                 , expPowerOf256Of256_30
+                 , expPowerOf256Of256_31
+                 , expPowerOf256Of256_32
+                 , expPowerOf256Of256_33
+                 , expPowerOf256Of256_3
+                 , expPowerOf256Of256_4
+                 , expPowerOf256Of256_5
+                 , expPowerOf256Of256_6
+                 , expPowerOf256Of256_7
+                 , expPowerOf256Of256_8
+                 , expPowerOf256Of256_9
+                 , expPowerOf2_64
+                 , expPowerOf2_8
+                 , expXY
+                 , expXY_success
+                 , push32AndSuicide
+                 , sha3_0
+                 , sha3_memSizeQuadraticCost32_zeroSize
+                 , log0_nonEmptyMem
+                 , log1_nonEmptyMem_logMemSize1_logMemStart31
+                 , log2_nonEmptyMem_logMemSize1
+                 , log3_PC
+                 , log4_PC
+                 , suicide
+                 , push32AndSuicide
+                 , 'JDfromStorageDynamicJumpi1'
+                 , 'JDfromStorageDynamicJump0_jumpdest0'
+                 , 'JDfromStorageDynamicJump0_jumpdest2'
+                 , 'JDfromStorageDynamicJumpiAfterStop'
+                 , loop_stacklimit_1020
+                 , balance0
+                 , balance1
+                 , balance01
+                 , balanceAddress2
+                 , balanceAddressInputTooBigLeftMyAddress
+                 , balanceCaller3
+                 , extcodecopy0
+                 , extcodecopyZeroMemExpansion
+                 , extcodesize0
+                 , extcodesize1
+                 , extcodecopy0AddressTooBigRight
+                 , extcodecopy0AddressTooBigLeft
+                 , 'ExtCodeSizeAddressInputTooBigRightMyAddress'
+                 , 'ExtCodeSizeAddressInputTooBigLeftMyAddress'
+                 , calldatacopyUnderFlow
+                 , calldatacopy_sec
+                 , balanceAddressInputTooBigRightMyAddress
+                 , balanceAddressInputTooBig
+                 , swapAt52becameMstore
+                 , sstore_underflow
+                 , sstore_load_0
+                 , sstore_load_1
+                 ]).
 
 %%====================================================================
 %% Arithmetic tests
@@ -321,7 +451,7 @@ vm_tests() ->
 %%====================================================================
 
 vm_push_dup_swap_test_() ->
-    aevm_test_utils:testcase_generate("VMTests/vmPushDupSwapTest", vm_push_dup_swap_tests()).
+    aevm_test_utils:testcase_generate("VMTests/vmPushDupSwapTest", vm_push_dup_swap_tests(), fun extra_opts/1).
 
 vm_push_dup_swap_tests() ->
     [ dup1

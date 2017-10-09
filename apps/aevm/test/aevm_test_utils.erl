@@ -68,7 +68,7 @@ testcase({Path, Name, Opts}, Spec) ->
               ?opt_format(Opts, "State of ~w: ~p~n", [Name, State]),
               validate_storage(State, Spec),
               validate_out(State, Spec),
-              validate_gas(State, Spec),
+              validate_gas(State, Spec, Opts),
               validate_callcreates(State, Spec)
       end
     }.
@@ -91,11 +91,14 @@ validate_out(State, #{out := SpecOut} =_Spec) ->
     ?assertEqual(SpecOut, Out);
 validate_out(_State, _Spec) -> true.
 
-
-validate_gas(State, #{gas :=_SpecGas, exec := #{gas :=_GasIn}} =_Spec) ->
-    %% TODO: Start checking when gas is calculated correctly.
-    _Out  = aevm_eeevm_state:gas(State),
-    %% ?assertEqual({GasIn, SpecGas}, {GasIn, Out}),
+validate_gas(_State, #{} =_Spec, #{validate_gas := false}) ->
+    ok;
+validate_gas(State, #{gas := SpecGas} =_Spec,_Opts) ->
+    Out  = aevm_eeevm_state:gas(State),
+    ?assertEqual(SpecGas, Out),
+    ok;
+validate_gas(_State, #{} =_Spec,_Opts) ->
+    %% TODO: Make sure that this was an exception.
     ok.
 
 validate_callcreates(State, #{callcreates := []} =_Spec) ->
@@ -241,7 +244,7 @@ build_data_array([], Acc) ->
 %% Define the structure of a test config.
 
 -define(OPTIONAL_CONFIG_FIELDS, [ {callcreates, default, []}
-                                , {gas, default, <<"0x00">>}
+                                , {gas, leave_out}
                                 , {logs, leave_out}
                                 , {out, leave_out}
                                 , {post, leave_out}
