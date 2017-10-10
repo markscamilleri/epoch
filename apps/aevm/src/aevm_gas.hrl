@@ -29,7 +29,7 @@
 -define(GEXTCODECOPY, 20). %% From go implementation
 
 %% Amount of gas to pay for a BALANCE operation.
--define(GBALANCE, 400). %% 20 from the go implementation
+-define(GBALANCE, 20). %% From the go implementation. 400 in yellowpages
 
 %% Paid for a SLOAD operation.
 -define(GSLOAD, 200). %% 50 from the go implementation

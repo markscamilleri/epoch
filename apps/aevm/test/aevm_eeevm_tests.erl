@@ -31,7 +31,6 @@ gas_exception(Name) ->
                  [ arith1
                  , expXY
                  , expXY_success
-                 , push32AndSuicide
                  , sha3_0
                  , sha3_memSizeQuadraticCost32_zeroSize
                  , log0_nonEmptyMem
@@ -46,24 +45,12 @@ gas_exception(Name) ->
                  , 'JDfromStorageDynamicJump0_jumpdest2'
                  , 'JDfromStorageDynamicJumpiAfterStop'
                  , loop_stacklimit_1020
-                 , balance0
-                 , balance1
-                 , balance01
-                 , balanceAddress2
-                 , balanceAddressInputTooBigLeftMyAddress
-                 , balanceCaller3
-                 , extcodecopy0
-                 , extcodecopyZeroMemExpansion
-                 , extcodesize0
-                 , extcodesize1
                  , extcodecopy0AddressTooBigRight
                  , extcodecopy0AddressTooBigLeft
                  , 'ExtCodeSizeAddressInputTooBigRightMyAddress'
                  , 'ExtCodeSizeAddressInputTooBigLeftMyAddress'
                  , calldatacopyUnderFlow
                  , calldatacopy_sec
-                 , balanceAddressInputTooBigRightMyAddress
-                 , balanceAddressInputTooBig
                  , swapAt52becameMstore
                  , sstore_underflow
                  , sstore_load_0
