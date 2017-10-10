@@ -75,7 +75,7 @@
 
 %% Partial payment when multiplied by dlog256(exponent)e for the EXP
 %% operation.
--define(GEXPBYTE, 50).
+-define(GEXPBYTE, 10). %% From the go implementation. 50 from the yellowpages
 
 %% Paid for every additional word when expanding memory.
 -define(GMEMORY, 3).
