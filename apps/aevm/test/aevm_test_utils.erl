@@ -62,6 +62,7 @@ testcase({Path, Name, Opts}, Spec) ->
     , fun() ->
               ?opt_format(Opts, "Setting up state: ~w~n", [Name]),
               InitState = init_state(Spec, Opts),
+              ?opt_format(Opts, "Init state: ~p~n", [InitState]),
               ?opt_format(Opts, "Running: ~w~n", [Name]),
               State = ?wrap_run(run_eeevm(InitState)),
               ?opt_format(Opts, "Checking: ~w~n", [Name]),
@@ -248,6 +249,8 @@ build_data_array([], Acc) ->
                                 , {logs, leave_out}
                                 , {out, leave_out}
                                 , {post, leave_out}
+                                , {sourceHash, default, <<>>}
+                                , {lllcversion, default, <<>>}
                                 ]).
 
 get_default_for_optional_config_field(X) ->
@@ -262,6 +265,8 @@ config_structure() ->
           #{ '_info' => #{ comment => string
                          , filledwith => string
                          , source => string
+                         , sourceHash => string
+                         , lllcversion => string
                          }
            , callcreates => [#{ data => data_array
                               , destination => bin_int
